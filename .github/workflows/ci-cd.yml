@@ -1,4 +1,4 @@
-name: CI/CD Pipeline with SonarQube and Trivy
+name: CI/CD Pipeline with SonarQube, Trivy, and Terraform
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:  # Permite acionar manualmente o workflow
 
 jobs:
   build-and-test:
@@ -90,3 +91,59 @@ jobs:
       - name: Clean up workspace
         if: always()
         run: rm -rf $HOME/sonar-scanner-7.0.2.4839-linux-x64 sonar-scanner.zip
+
+  provision-infrastructure:
+    runs-on: ubuntu-latest
+    needs: build-and-test  # Depende do job de build e teste
+    steps:
+      # Passo 1: Checkout do código
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Passo 2: Configurar o Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"
+
+      # Passo 3: Inicializar o Terraform
+      - name: Terraform Init
+        run: terraform init
+
+      # Passo 4: Aplicar as mudanças (provisionar infraestrutura)
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      # Passo 5: Exibir o IP público da instância (corrigido)
+      - name: Get Public IP
+        run: |
+          echo "Public IP: $(terraform output -raw public_ip)"
+
+  destroy-infrastructure:
+    runs-on: ubuntu-latest
+    needs: provision-infrastructure  # Depende do job de provisionamento
+    if: github.event_name == 'workflow_dispatch'  # Só roda quando acionado manualmente
+    steps:
+      # Passo 1: Checkout do código
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Passo 2: Configurar o Terraform
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"
+
+      # Passo 3: Inicializar o Terraform
+      - name: Terraform Init
+        run: terraform init
+
+      # Passo 4: Destruir a infraestrutura
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
