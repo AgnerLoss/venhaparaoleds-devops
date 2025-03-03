@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busca de Concursos e Candidatos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        table {
+            width: 80%;
+            margin: auto;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Buscar Concursos por CPF</h1>
+    <input type="text" id="cpfBusca" placeholder="Digite o CPF">
+    <button onclick="buscarConcursos()">Buscar</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Órgão</th>
+                <th>Código</th>
+                <th>Edital</th>
+            </tr>
+        </thead>
+        <tbody id="resultadoConcursos"></tbody>
+    </table>
+    
+    <h1>Buscar Candidatos por Código do Concurso</h1>
+    <input type="text" id="codigoBusca" placeholder="Digite o Código do Concurso">
+    <button onclick="buscarCandidatos()">Buscar</button>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Data de Nascimento</th>
+                <th>CPF</th>
+            </tr>
+        </thead>
+        <tbody id="resultadoCandidatos"></tbody>
+    </table>
+    
+    <script>
+        async function buscarConcursos() {
+            let cpf = document.getElementById("cpfBusca").value.trim();
+            if (!cpf) {
+                alert("Digite um CPF válido.");
+                return;
+            }
+            let res = await fetch(`/buscar_concursos/${cpf}`);
+            let data = await res.json();
+            let tabela = document.getElementById("resultadoConcursos");
+            tabela.innerHTML = ""; // Limpa resultados anteriores
+            if (data.message) {
+                alert(data.message);
+                return;
+            }
+            data.forEach(c => {
+                let row = `<tr><td>${c.orgao}</td><td>${c.codigo}</td><td>${c.edital}</td></tr>`;
+                tabela.innerHTML += row;
+            });
+        }
+
+        async function buscarCandidatos() {
+            let codigo = document.getElementById("codigoBusca").value.trim();
+            if (!codigo) {
+                alert("Digite um código válido.");
+                return;
+            }
+            let res = await fetch(`/buscar_candidatos/${codigo}`);
+            let data = await res.json();
+            let tabela = document.getElementById("resultadoCandidatos");
+            tabela.innerHTML = ""; // Limpa resultados anteriores
+            if (data.message) {
+                alert(data.message);
+                return;
+            }
+            data.forEach(c => {
+                let row = `<tr><td>${c.nome}</td><td>${c.data_nascimento}</td><td>${c.cpf}</td></tr>`;
+                tabela.innerHTML += row;
+            });
+        }
+    </script>
+</body>
+</html>

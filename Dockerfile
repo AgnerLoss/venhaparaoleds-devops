@@ -1,32 +1,32 @@
-# Stage 1: Build
-FROM cgr.dev/chainguard/python:latest-dev as builder
+# Usando a imagem oficial do Python
+FROM python:3.12-slim
 WORKDIR /app
+
+# Instalar dependências do sistema
+RUN apt-get update && apt-get install -y gcc libpq-dev && rm -rf /var/lib/apt/lists/*
 
 # Copiar o arquivo de dependências
 COPY requirements.txt .
 
-# Criar um ambiente virtual e instalar as dependências
+# Criar um ambiente virtual e instalar as dependências corretamente
 RUN python3 -m venv /app/venv && \
-    /app/venv/bin/pip install --no-cache-dir -r requirements.txt
+    /app/venv/bin/python -m pip install --no-cache-dir --upgrade pip && \
+    /app/venv/bin/python -m pip install --no-cache-dir -r requirements.txt && \
+    echo "Listando /app após criação do venv:" && ls -l /app && \
+    echo "Listando /app/venv/bin para verificar o Python:" && ls -l /app/venv/bin/
 
-# Copiar o código-fonte e os arquivos de dados
+# Copiar o código-fonte
 COPY src/ ./src/
-COPY candidatos.txt concursos.txt ./
-
-# Stage 2: Run
-FROM cgr.dev/chainguard/python:latest
-WORKDIR /app
-
-# Copiar o ambiente virtual e as dependências do estágio anterior
-COPY --from=builder /app/venv /app/venv
-
-# Copiar o código-fonte e os arquivos de dados
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/candidatos.txt .
-COPY --from=builder /app/concursos.txt .
 
 # Configurar o PATH para usar o ambiente virtual
 ENV PATH="/app/venv/bin:$PATH"
 
-# Definir o comando padrão
-ENTRYPOINT ["python", "src/main.py"]
+# Configurar o ambiente Flask corretamente
+ENV FLASK_APP=/app/src/app.py
+ENV FLASK_ENV=production
+
+# Expor a porta do Flask
+EXPOSE 5000
+
+# Definir o comando padrão para rodar o Flask
+ENTRYPOINT ["/bin/sh", "-c", ". /app/venv/bin/activate && python /app/src/app.py"]

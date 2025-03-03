@@ -3,3 +3,8 @@ variable "aws_region" {
   type        = string
   default     = "us-west-1"  # Definindo a região como us-west-1
 }
+
+variable "ghcr_token" {
+  description = "Token para login no GitHub Container Registry"
+  type        = string
+}
