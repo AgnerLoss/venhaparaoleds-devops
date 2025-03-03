@@ -56,7 +56,7 @@ resource "aws_instance" "app_server" {
             # Baixar e rodar o container
             docker pull ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:latest
             docker run -d -p 5000:5000 --name concurso-publico \
-              -e DB_HOST="<IP_DO_BANCO>" \
+              -e DB_HOST="db" \
               -e DB_USER="admin2" \
               -e DB_PASS="SenhaSegura123!" \
               -e DB_NAME="concurso" \
