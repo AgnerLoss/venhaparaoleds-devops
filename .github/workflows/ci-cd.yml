@@ -112,7 +112,7 @@ jobs:
 
       # Passo 4: Aplicar as mudanças (provisionar infraestrutura)
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -var="ghcr_token=${{ secrets.GHCR_TOKEN }}"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
