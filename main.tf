@@ -5,7 +5,7 @@ provider "aws" {
 resource "aws_instance" "app_server" {
   ami                    = "ami-094b981da55429bfc"  # AMI do Amazon Linux 2 (ou use um Ubuntu)
   instance_type          = "t2.micro"               # Tipo de instância Free Tier
-  security_groups        = ["sg-02473c56a241de8c5"]
+  vpc_security_group_ids = ["sg-02473c56a241de8c5"]
   associate_public_ip_address = true  # Garante que a instância tenha IP público
 
   tags = {
@@ -27,13 +27,23 @@ resource "aws_instance" "app_server" {
             # Baixar e rodar o container
             docker pull ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:latest
             docker run -d -p 5000:5000 --name concurso-publico \
-              -e DB_HOST="db" \
+              -e DB_HOST="concurso.c922aggume6k.us-west-1.rds.amazonaws.com" \
               -e DB_USER="admin2" \
               -e DB_PASS="SenhaSegura123!" \
               -e DB_NAME="concurso" \
               -e DB_PORT="5432" \
               ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:latest
             EOF
-
 }
 
+# 🔹 ASSOCIA O ELASTIC IP EXISTENTE À EC2
+resource "aws_eip_association" "elastic_ip_assoc" {
+  instance_id   = aws_instance.app_server.id
+  allocation_id = "eipalloc-0402746a62babecd8"  # 🔹 Substitua pelo seu Allocation ID real
+}
+
+# 🔹 SAÍDA PARA VER O IP FIXO
+output "elastic_ip" {
+  description = "IP fixo da instância EC2"
+  value       = aws_eip_association.elastic_ip_assoc.allocation_id
+}

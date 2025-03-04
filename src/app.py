@@ -175,8 +175,9 @@ def buscar_candidatos_por_codigo(codigo):
         cur.execute("""
             SELECT cand.nome, cand.data_nascimento, cand.cpf
             FROM candidatos cand
-            JOIN concursos c ON string_to_array(c.vagas, ', ') && string_to_array(cand.profissoes, ', ')
-            WHERE c.codigo = %s;
+            JOIN concursos c ON c.codigo = %s
+            JOIN LATERAL unnest(string_to_array(c.vagas, ', ')) AS vaga 
+            ON vaga = ANY(string_to_array(cand.profissoes, ', '))
         """, (codigo,))
         candidatos = cur.fetchall()
         cur.close()
