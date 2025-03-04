@@ -42,8 +42,4 @@ resource "aws_eip_association" "elastic_ip_assoc" {
   allocation_id = "eipalloc-0402746a62babecd8"  # 🔹 Substitua pelo seu Allocation ID real
 }
 
-# 🔹 SAÍDA PARA VER O IP FIXO
-output "elastic_ip" {
-  description = "IP fixo da instância EC2"
-  value       = aws_eip_association.elastic_ip_assoc.allocation_id
-}
+
