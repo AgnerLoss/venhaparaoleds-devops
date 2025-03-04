@@ -41,45 +41,6 @@ resource "aws_instance" "app_server" {
     Name = "AppServerInstance"
   }
 
-  resource "aws_db_instance" "rds_postgres" {
-  allocated_storage    = 20
-  engine              = "postgres"
-  engine_version      = "14.3"
-  instance_class      = "db.t3.micro"  # Free Tier
-  identifier          = "concurso-rds"
-  username           = "admin2"
-  password           = "SenhaSegura123!"
-  db_name            = "concurso"  # Este é o nome do banco de dados
-  publicly_accessible = true  # ⚠️ Apenas enquanto testamos
-  skip_final_snapshot = true
-  vpc_security_group_ids = [aws_security_group.db_sg.id]
-}
-
-resource "aws_security_group" "db_sg" {
-  name        = "db-security-group"
-  description = "Security group para PostgreSQL no RDS"
-
-  ingress {
-    from_port   = 5432
-    to_port     = 5432
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]  # ⚠️ Melhor restringir depois
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-}
-
-output "rds_endpoint" {
-  description = "Endpoint do banco de dados RDS"
-  value       = aws_db_instance.rds_postgres.endpoint
-}
-
-
   # Script de inicialização para instalar Docker e rodar sua aplicação
   user_data = <<-EOF
             #!/bin/bash
