@@ -173,13 +173,14 @@ def buscar_candidatos_por_codigo(codigo):
     try:
         cur = conn.cursor()
         cur.execute("""
-            SELECT DISTINCT ON (cand.cpf) cand.nome, cand.data_nascimento, cand.cpf
+            SELECT cand.nome, cand.data_nascimento, cand.cpf
             FROM candidatos cand
             JOIN concursos c ON c.codigo = %s
             WHERE EXISTS (
                 SELECT 1
                 FROM unnest(string_to_array(c.vagas, ', ')) AS vaga
-                WHERE vaga = ANY(string_to_array(cand.profissoes, ', '))
+                JOIN unnest(string_to_array(cand.profissoes, ', ')) AS profissao 
+                ON vaga = profissao
             )
         """, (codigo,))
         candidatos = cur.fetchall()
@@ -194,6 +195,7 @@ def buscar_candidatos_por_codigo(codigo):
         return jsonify({"error": f"Erro ao buscar candidatos: {e}"}), 500
     finally:
         release_db_connection(conn)
+
 
 
 

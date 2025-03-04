@@ -12,197 +12,150 @@ Este projeto foi desenvolvido com o auxílio de ferramentas de Inteligência Art
 
 ---
 
-Este projeto é uma aplicação Python que gerencia candidatos e concursos públicos, permitindo a busca de concursos compatíveis com o perfil de um candidato e a listagem de candidatos que se encaixam em um concurso específico.
+# 📋 Concurso Público API 🚀
+
+## **Descrição do Projeto**
+Este projeto é uma API REST desenvolvida em **Flask** para gerenciar concursos públicos e candidatos.  
+A aplicação está implantada na **AWS** usando:
+- **EC2** para rodar o backend com **Docker**
+- **RDS PostgreSQL** para armazenar os dados
+- **Terraform** para provisionar a infraestrutura
+- **Nginx** como proxy reverso para direcionar requisições ao Flask
 
 ---
 
-## Funcionalidades
-
-### Listar Concursos Compatíveis com um Candidato
-- **Descrição**: Dado o CPF de um candidato, o sistema retorna os concursos públicos que se encaixam no seu perfil, com base nas profissões cadastradas.
-- **Exemplo de Uso**:
-  ```bash
-  python src/main.py --cpf 12345678901
-  ```
-
-### Listar Candidatos Compatíveis com um Concurso
-- **Descrição**: Dado o código de um concurso, o sistema retorna os candidatos que possuem profissões compatíveis com as vagas do concurso.
-- **Exemplo de Uso**:
-  ```bash
-  python src/main.py --concurso 98765
-  ```
+## **📋 Tecnologias Utilizadas**
+- 🦄 **Python 3.12** + **Flask**
+- 💢 **Docker**
+- ☁️ **AWS EC2 + RDS PostgreSQL**
+- 🌿 **Terraform**
+- 🌍 **Nginx (Proxy Reverso)**
+- 🔍 **PostgreSQL**
+- 🛠️ **GitHub Actions (CI/CD)**
 
 ---
 
-## Como Executar o Projeto
-
-### Pré-requisitos
-
-- **Python 3.9 ou superior**:
-  - [Documentação oficial do Python](https://www.python.org/doc/)
-  - Para instalar o módulo `venv` no Python 3.12:
-    ```bash
-    sudo apt install python3.12-venv
-    ```
-
-- **Docker (opcional, para execução em contêiner)**:
-  - [Documentação oficial do Docker](https://docs.docker.com/)
-  - Para usar o Docker sem `sudo`, siga o guia oficial:
-    [Manage Docker as a non-root user](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user)
-
----
-
-### 1. Usar um Ambiente Virtual (Recomendado)
-
-Para evitar conflitos com pacotes do sistema, é altamente recomendado usar um ambiente virtual. Siga os passos abaixo:
-
-1. **Instale o módulo `venv`** (se ainda não estiver instalado):
-   ```bash
-   sudo apt install python3.12-venv
-   ```
-
-2. **Crie um ambiente virtual**:
-   ```bash
-   python3 -m venv venv
-   ```
-
-3. **Ative o ambiente virtual**:
-   - No Linux/Mac:
-     ```bash
-     source venv/bin/activate
-     ```
-   - No Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
-
-4. **Instale as dependências**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-5. **Execute o projeto**:
-   ```bash
-   python src/main.py
-   ```
-
-6. **Desative o ambiente virtual** quando terminar:
-   ```bash
-   deactivate
-   ```
-
----
-
-### 2. Executando com Docker
-
-Se preferir usar Docker, siga os passos abaixo:
-
-1. **Construa a imagem Docker**:
-   ```bash
-   docker build -t concurso-publico .
-   ```
-
-2. **Execute o contêiner**:
-   ```bash
-   docker run concurso-publico
-   ```
-
----
-
-## Vantagens do Multistage Build com Chainguard
-
-O uso de **multistage build** com a imagem base **Chainguard** traz várias vantagens para o projeto. Abaixo está o Dockerfile utilizado:
-
-```Dockerfile
-# Stage 1: Build
-FROM cgr.dev/chainguard/python:latest-dev as builder
-WORKDIR /app
-
-# Copiar o arquivo de dependências
-COPY requirements.txt .
-
-# Criar um ambiente virtual e instalar as dependências
-RUN python3 -m venv /app/venv && \
-    /app/venv/bin/pip install --no-cache-dir -r requirements.txt
-
-# Copiar o código-fonte e os arquivos de dados
-COPY src/ ./src/
-COPY candidatos.txt concursos.txt ./
-
-# Stage 2: Run
-FROM cgr.dev/chainguard/python:latest
-WORKDIR /app
-
-# Copiar o ambiente virtual e as dependências do estágio anterior
-COPY --from=builder /app/venv /app/venv
-
-# Copiar o código-fonte e os arquivos de dados
-COPY --from=builder /app/src ./src
-COPY --from=builder /app/candidatos.txt .
-COPY --from=builder /app/concursos.txt .
-
-# Configurar o PATH para usar o ambiente virtual
-ENV PATH="/app/venv/bin:$PATH"
-
-# Definir o comando padrão
-ENTRYPOINT ["python", "src/main.py"]
+## **📁 Como Rodar o Projeto**
+### **1️⃣ Clonar o repositório**
+```sh
+git clone https://github.com/SEU-USUARIO/SEU-REPO.git
+cd SEU-REPO
 ```
 
-### Benefícios do Multistage Build com Chainguard
+### **2️⃣ Subir a Infraestrutura na AWS com Terraform**
+Certifique-se de configurar suas **chaves da AWS** antes de rodar:
+```sh
+export AWS_ACCESS_KEY_ID="SEU_ACCESS_KEY"
+export AWS_SECRET_ACCESS_KEY="SEU_SECRET_KEY"
+terraform init
+terraform apply -auto-approve
+```
+Isso criará:
+✅ Uma instância **EC2** com **Docker e Nginx**  
+✅ Um banco de dados **RDS PostgreSQL**  
+✅ Um **Elastic IP fixo** para a EC2  
 
-1. **Imagens menores**:
-   - A imagem final contém apenas o necessário para executar a aplicação, resultando em uma imagem Docker menor e mais eficiente.
-
-2. **Segurança reforçada**:
-   - A Chainguard é uma imagem base minimalista e focada em segurança, reduzindo a superfície de ataque e minimizando riscos de vulnerabilidades.
-
-3. **Desempenho**:
-   - A imagem final é leve e otimizada, o que melhora o tempo de inicialização e o consumo de recursos.
-
-4. **Facilidade de manutenção**:
-   - O Dockerfile fica mais organizado, com estágios claramente definidos para build e runtime.
+### **3️⃣ Testar a API**
+Pegue o **IP da EC2** e acesse:
+```sh
+curl -X GET "http://SEU_IP_FIXO/buscar_candidatos/61828450843"
+```
+Se o Nginx estiver configurado corretamente, a API estará acessível em:
+```
+http://k8sloss.com.br
+```
 
 ---
 
-## Uso da Ferramenta Trivy no Pipeline
+## **🔍 Endpoints da API**
+### **📍 Listar Concursos por CPF**
+- **Método:** `GET`
+- **Endpoint:** `/buscar_concursos/<cpf>`
+- **Exemplo:**
+```sh
+curl -X GET "http://SEU_IP_FIXO/buscar_concursos/18284508434"
+```
 
-O **Trivy** é uma ferramenta de segurança que escaneia imagens Docker em busca de vulnerabilidades. Ele foi integrado ao pipeline de CI/CD para garantir que as imagens geradas estejam livres de vulnerabilidades críticas antes de serem enviadas para o GitHub Container Registry.
+### **📍 Listar Candidatos por Código do Concurso**
+- **Método:** `GET`
+- **Endpoint:** `/buscar_candidatos/<codigo>`
+- **Exemplo:**
+```sh
+curl -X GET "http://SEU_IP_FIXO/buscar_candidatos/61828450843"
+```
 
-### Benefícios do Trivy
+---
 
-1. **Detecção de vulnerabilidades**:
-   - O Trivy identifica vulnerabilidades em pacotes instalados na imagem Docker, como bibliotecas Python e dependências do sistema operacional.
+## **🌐 Configuração do Proxy Reverso com Nginx**
 
-2. **Integração contínua**:
-   - O Trivy é executado automaticamente no pipeline de CI/CD, garantindo que todas as imagens sejam escaneadas antes de serem publicadas.
+### **Arquivo de configuração do Nginx (`/etc/nginx/nginx.conf`)**
+```nginx
+server {
+    listen 80;
+    server_name k8sloss.com.br www.k8sloss.com.br;
 
-3. **Falha controlada**:
-   - O pipeline é configurado para falhar se vulnerabilidades com severidade `HIGH` ou `CRITICAL` forem detectadas, garantindo que apenas imagens seguras sejam publicadas.
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
 
-4. **Relatórios detalhados**:
-   - O Trivy gera relatórios claros sobre as vulnerabilidades encontradas, facilitando a correção de problemas.
+### **Reiniciar o Nginx para aplicar mudanças**
+```sh
+sudo systemctl restart nginx
+```
 
-Exemplo de integração no pipeline:
+---
+
+## **🏢 Infraestrutura AWS com Terraform**
+
+### **📍 Recursos Criados**
+✅ **EC2** (Instância com Docker e Nginx)  
+✅ **RDS PostgreSQL** (Banco gerenciado)  
+✅ **Security Groups** (Permissões para tráfego HTTP e PostgreSQL)  
+✅ **Elastic IP** (IP fixo para a EC2)
+
+---
+
+## **🚀 Como Fazer Deploy Automático (CI/CD)**
+
+O projeto pode ser configurado com **GitHub Actions** para deploy contínuo.
+
+### **Exemplo de workflow (`.github/workflows/deploy.yml`)**
 ```yaml
-- name: Install Trivy
-  run: |
-    sudo apt-get update
-    sudo apt-get install -y wget apt-transport-https gnupg lsb-release
-    wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-    echo deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main | sudo tee -a /etc/apt/sources.list.d/trivy.list
-    sudo apt-get update
-    sudo apt-get install -y trivy
+name: Deploy Infra to AWS
 
-- name: Scan Docker image with Trivy
-  run: |
-    trivy image --severity HIGH,CRITICAL concurso-publico
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 ```
+
+Agora, **sempre que fizer um push para `main`**, o Terraform será executado automaticamente! 🚀🔥
 
 ---
 
-## Licença
-
-Este projeto está licenciado sob a licença MIT. Consulte o arquivo [LICENSE](LICENSE) para mais detalhes.
-```
-
----
