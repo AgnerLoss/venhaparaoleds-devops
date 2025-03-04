@@ -176,8 +176,8 @@ def buscar_candidatos_por_codigo(codigo):
             SELECT cand.nome, cand.data_nascimento, cand.cpf
             FROM candidatos cand
             JOIN concursos c ON c.codigo = %s
-            JOIN LATERAL unnest(string_to_array(c.vagas, ', ')) AS vaga 
-            ON vaga = ANY(string_to_array(cand.profissoes, ', '))
+            JOIN LATERAL unnest(string_to_array(cand.profissoes, ', ')) AS profissao 
+            ON profissao IN (SELECT unnest(string_to_array(c.vagas, ', ')))
         """, (codigo,))
         candidatos = cur.fetchall()
         cur.close()
@@ -191,6 +191,7 @@ def buscar_candidatos_por_codigo(codigo):
         return jsonify({"error": f"Erro ao buscar candidatos: {e}"}), 500
     finally:
         release_db_connection(conn)
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
