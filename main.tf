@@ -34,7 +34,7 @@ resource "aws_instance" "app_server" {
             echo "🔧 Baixando e rodando o container Flask..."
             sudo docker pull ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:latest
             sudo docker run -d -p 5000:5000 --name concurso-publico \
-              -e DB_HOST="concurso.c922aggume6k.us-west-1.rds.amazonaws.com" \
+              -e DB_HOST="concurso-rds.c922aggume6k.us-west-1.rds.amazonaws.com" \
               -e DB_USER="${var.db_username}" \
               -e DB_PASS="${var.db_password}" \
               -e DB_NAME="${var.db_name}" \

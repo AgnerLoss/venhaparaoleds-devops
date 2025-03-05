@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 
 # Configuração do banco de dados PostgreSQL no RDS
-DB_HOST = os.getenv("DB_HOST", "concurso.c922aggume6k.us-west-1.rds.amazonaws.com")
+DB_HOST = os.getenv("DB_HOST", "concurso-rds.c922aggume6k.us-west-1.rds.amazonaws.com")
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 DB_NAME = os.getenv("DB_NAME")
