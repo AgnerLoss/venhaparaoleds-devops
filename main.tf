@@ -26,7 +26,7 @@ resource "aws_instance" "app_server" {
     Name = "AppServerInstance"
   }
 
-  # Script de inicialização para instalar Docker, configurar Nginx e criar tabelas
+  # Script de inicialização para instalar Docker e configurar Nginx
   user_data = <<-EOF
             #!/bin/bash
             set -e  # Faz o script parar em caso de erro
@@ -34,7 +34,7 @@ resource "aws_instance" "app_server" {
             echo "🔧 Atualizando pacotes..."
             sudo yum update -y
             sudo amazon-linux-extras enable docker
-            sudo yum install -y docker nginx postgresql15
+            sudo yum install -y docker nginx
 
             echo "🔧 Iniciando serviços..."
             sudo systemctl start docker
@@ -61,16 +61,6 @@ resource "aws_instance" "app_server" {
             echo "🔧 Reiniciando Nginx..."
             sudo systemctl restart nginx
 
-            echo "🔧 Aguardando o RDS ficar pronto..."
-            for i in $(seq 1 20); do
-                PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -c "SELECT 1;" && break
-                echo "🔄 Banco ainda não disponível... aguardando 15 segundos"
-                sleep 15
-            done
-
-            echo "🚀 Criando tabelas no banco..."
-            PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -f /home/ec2-user/init.sql
-
             echo "🔧 Logando no GitHub Container Registry..."
             echo "${var.ghcr_token}" | docker login ghcr.io -u USERNAME --password-stdin
 
@@ -92,6 +82,28 @@ EOF
 resource "aws_eip_association" "elastic_ip_assoc" {
   instance_id   = aws_instance.app_server.id
   allocation_id = "eipalloc-0402746a62babecd8"  # 🔹 Substitua pelo seu Allocation ID real
+}
+
+# 🔹 EXECUTA O SCRIPT SQL PARA CRIAR TABELAS APÓS O BANCO ESTAR PRONTO
+resource "null_resource" "init_db" {
+  depends_on = [aws_db_instance.rds_postgres]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "⏳ Aguardando o banco de dados estar pronto..."
+      
+      # Loop para verificar se o RDS já está acessível
+      for i in $(seq 1 20); do
+        PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -c "SELECT 1;" && break
+        echo "🔄 Banco ainda não disponível... aguardando 15 segundos"
+        sleep 15
+      done
+      
+      echo "🚀 Criando tabelas no banco..."
+      PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -f init.sql
+      echo "✅ Tabelas criadas com sucesso!"
+    EOT
+  }
 }
 
 # 🔹 SAÍDA PARA VER O ENDPOINT DO RDS
