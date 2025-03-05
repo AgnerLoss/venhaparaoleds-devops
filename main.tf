@@ -29,15 +29,22 @@ resource "aws_instance" "app_server" {
   # Script de inicialização para instalar Docker e configurar Nginx como proxy reverso
   user_data = <<-EOF
             #!/bin/bash
+            set -e  # Faz o script parar em caso de erro
+
+            echo "🔧 Atualizando pacotes..."
             sudo yum update -y
-            sudo yum install -y docker nginx postgresql
+
+            echo "🔧 Instalando Docker e Nginx..."
+            sudo yum install -y docker nginx
+
+            echo "🔧 Iniciando serviços..."
             sudo systemctl start docker
             sudo systemctl enable docker
             sudo systemctl start nginx
             sudo systemctl enable nginx
             sudo usermod -aG docker ec2-user
 
-            # Configurar Nginx como proxy reverso
+            echo "🔧 Configurando Nginx como proxy reverso..."
             sudo bash -c 'cat > /etc/nginx/nginx.conf <<EOF2
             server {
                 listen 80;
@@ -52,13 +59,13 @@ resource "aws_instance" "app_server" {
             }
             EOF2'
 
-            # Reiniciar Nginx
+            echo "🔧 Reiniciando Nginx..."
             sudo systemctl restart nginx
 
-            # Login no GitHub Container Registry
+            echo "🔧 Logando no GitHub Container Registry..."
             echo "${var.ghcr_token}" | docker login ghcr.io -u USERNAME --password-stdin
 
-            # Baixar e rodar o container
+            echo "🔧 Baixando e rodando o container Flask..."
             docker pull ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:latest
             docker run -d -p 5000:5000 --name concurso-publico \
               -e DB_HOST="${aws_db_instance.rds_postgres.endpoint}" \
@@ -67,6 +74,8 @@ resource "aws_instance" "app_server" {
               -e DB_NAME="${var.db_name}" \
               -e DB_PORT="${var.db_port}" \
               ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:latest
+
+            echo "✅ Configuração concluída com sucesso!"
 EOF
 }
 
@@ -83,7 +92,7 @@ resource "null_resource" "init_db" {
   provisioner "local-exec" {
     command = <<EOT
       sleep 30  # Aguarda o banco ficar pronto
-      PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.address}" -U "${var.db_username}" -d "${var.db_name}" -f init.sql
+      PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -f init.sql
     EOT
   }
 }
