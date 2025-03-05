@@ -35,6 +35,5 @@ variable "db_port" {
 
 variable "db_host" {
   description = "Porta do banco de dados"
-  type        = string
-  sensitive   = true
+  type        = string  
 }
