@@ -2,6 +2,7 @@ from flask import Flask, jsonify, render_template, request
 import psycopg2
 import psycopg2.pool
 import os
+import time
 
 app = Flask(__name__)
 
@@ -12,74 +13,37 @@ DB_PASS = os.getenv("DB_PASS")
 DB_NAME = os.getenv("DB_NAME")
 DB_PORT = os.getenv("DB_PORT", "5432")
 
-# Garantir que o banco de dados existe antes de criar tabelas
-def ensure_database_exists():
-    """ Verifica se o banco existe, senão cria e adiciona tabelas. """
-    try:
-        conn = psycopg2.connect(
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASS,
-            dbname="postgres",  # Conectar no banco padrão
-            port=DB_PORT
-        )
-        conn.autocommit = True
-        cur = conn.cursor()
+# Função para aguardar o banco de dados ficar disponível
+def wait_for_db():
+    """ Aguarda o banco de dados estar pronto antes de conectar """
+    max_retries = 10
+    retries = 0
 
-        # Verifica se o banco "concurso" existe
-        cur.execute("SELECT 1 FROM pg_database WHERE datname = %s;", (DB_NAME,))
-        exists = cur.fetchone()
+    while retries < max_retries:
+        try:
+            conn = psycopg2.connect(
+                host=DB_HOST,
+                user=DB_USER,
+                password=DB_PASS,
+                dbname=DB_NAME,
+                port=DB_PORT
+            )
+            conn.close()
+            app.logger.info("✅ Banco de dados disponível!")
+            return
+        except Exception as e:
+            app.logger.warning(f"⏳ Banco de dados ainda não disponível, tentando novamente... ({retries+1}/{max_retries})")
+            time.sleep(5)
+            retries += 1
 
-        if not exists:
-            cur.execute(f"CREATE DATABASE {DB_NAME};")
-            app.logger.info(f"✅ Banco {DB_NAME} criado com sucesso!")
-        
-        cur.close()
-        conn.close()
-    except Exception as e:
-        app.logger.error(f"❌ Erro ao verificar/criar banco de dados: {e}")
+    app.logger.error("❌ Banco de dados não ficou disponível dentro do tempo limite.")
+    exit(1)  # Sai com erro se o banco nunca estiver disponível
 
-def create_tables():
-    """ Cria as tabelas se elas não existirem. """
-    conn = psycopg2.connect(
-        host=DB_HOST,
-        user=DB_USER,
-        password=DB_PASS,
-        dbname=DB_NAME,
-        port=DB_PORT
-    )
-    conn.autocommit = True
-    cur = conn.cursor()
-    try:
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS concursos (
-            id SERIAL PRIMARY KEY,
-            orgao TEXT NOT NULL,
-            edital TEXT NOT NULL,
-            codigo TEXT NOT NULL,
-            vagas TEXT NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS candidatos (
-            id SERIAL PRIMARY KEY,
-            nome TEXT NOT NULL,
-            data_nascimento TEXT NOT NULL,
-            cpf TEXT NOT NULL UNIQUE,
-            profissoes TEXT NOT NULL
-        );
-        ""
-        )
-        app.logger.info("✅ Tabelas criadas/verificadas com sucesso.")
-    except Exception as e:
-        app.logger.error(f"❌ Erro ao criar tabelas: {e}")
-    finally:
-        cur.close()
-        conn.close()
+# Aguarda o banco antes de prosseguir
+wait_for_db()
 
 # Criar pool de conexões para evitar sobrecarga no banco
 try:
-    ensure_database_exists()
-    create_tables()
     db_pool = psycopg2.pool.SimpleConnectionPool(
         1, 10,
         host=DB_HOST,

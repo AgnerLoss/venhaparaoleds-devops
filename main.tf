@@ -30,7 +30,7 @@ resource "aws_instance" "app_server" {
   user_data = <<-EOF
             #!/bin/bash
             sudo yum update -y
-            sudo yum install -y docker nginx
+            sudo yum install -y docker nginx postgresql
             sudo systemctl start docker
             sudo systemctl enable docker
             sudo systemctl start nginx
@@ -68,7 +68,6 @@ resource "aws_instance" "app_server" {
               -e DB_PORT="${var.db_port}" \
               ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:latest
 EOF
-
 }
 
 # 🔹 ASSOCIA O ELASTIC IP EXISTENTE À EC2
@@ -77,5 +76,19 @@ resource "aws_eip_association" "elastic_ip_assoc" {
   allocation_id = "eipalloc-0402746a62babecd8"  # 🔹 Substitua pelo seu Allocation ID real
 }
 
+# 🔹 Executa o script SQL para criar tabelas após o banco estar pronto
+resource "null_resource" "init_db" {
+  depends_on = [aws_db_instance.rds_postgres]
 
+  provisioner "local-exec" {
+    command = <<EOT
+      PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -f init.sql
+    EOT
+  }
+}
 
+# 🔹 SAÍDA PARA VER O ENDPOINT DO RDS
+output "rds_endpoint" {
+  description = "Endpoint do banco de dados RDS"
+  value       = aws_db_instance.rds_postgres.endpoint
+}
