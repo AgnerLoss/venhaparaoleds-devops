@@ -24,11 +24,17 @@ variable "db_password" {
 variable "db_name" {
   description = "Nome do banco de dados"
   type        = string
-  default     = "concurso"
+  sensitive   = true
 }
 
 variable "db_port" {
   description = "Porta do banco de dados"
   type        = string
-  default     = "5432"
+  sensitive   = true
+}
+
+variable "db_host" {
+  description = "Porta do banco de dados"
+  type        = string
+  sensitive   = true
 }
