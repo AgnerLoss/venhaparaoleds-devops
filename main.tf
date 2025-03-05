@@ -34,6 +34,9 @@ resource "aws_instance" "app_server" {
             echo "🔧 Atualizando pacotes..."
             sudo yum update -y
 
+            echo "🔧 Habilitando repositório do Docker..."
+            sudo amazon-linux-extras enable docker
+
             echo "🔧 Instalando Docker e Nginx..."
             sudo yum install -y docker nginx
 
@@ -91,7 +94,16 @@ resource "null_resource" "init_db" {
 
   provisioner "local-exec" {
     command = <<EOT
-      sleep 30  # Aguarda o banco ficar pronto
+      echo "⏳ Aguardando o banco de dados estar pronto..."
+      
+      # Loop para verificar se o RDS já está acessível
+      for i in $(seq 1 10); do
+        PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -c "SELECT 1;" && break
+        echo "🔄 Banco ainda não disponível... aguardando 10 segundos"
+        sleep 10
+      done
+      
+      echo "🚀 Executando script de criação de tabelas..."
       PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -f init.sql
     EOT
   }
