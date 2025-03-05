@@ -32,9 +32,10 @@ resource "aws_instance" "app_server" {
             set -e  # Faz o script parar em caso de erro
 
             echo "🔧 Atualizando pacotes..."
-            sudo yum update -y
-            sudo amazon-linux-extras enable docker
-            sudo yum install -y docker nginx
+            sudo dnf update -y
+
+            echo "🔧 Instalando Docker e Nginx..."
+            sudo dnf install -y docker nginx postgresql15
 
             echo "🔧 Iniciando serviços..."
             sudo systemctl start docker
@@ -44,7 +45,7 @@ resource "aws_instance" "app_server" {
             sudo usermod -aG docker ec2-user
 
             echo "🔧 Configurando Nginx como proxy reverso..."
-            sudo bash -c 'cat > /etc/nginx/nginx.conf <<EOF2
+            sudo tee /etc/nginx/nginx.conf > /dev/null <<EOF2
             server {
                 listen 80;
                 server_name k8sloss.com.br www.k8sloss.com.br;
@@ -56,17 +57,17 @@ resource "aws_instance" "app_server" {
                     proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
                 }
             }
-            EOF2'
+            EOF2
 
             echo "🔧 Reiniciando Nginx..."
             sudo systemctl restart nginx
 
             echo "🔧 Logando no GitHub Container Registry..."
-            echo "${var.ghcr_token}" | docker login ghcr.io -u USERNAME --password-stdin
+            echo "${var.ghcr_token}" | sudo docker login ghcr.io -u USERNAME --password-stdin
 
             echo "🔧 Baixando e rodando o container Flask..."
-            docker pull ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:latest
-            docker run -d -p 5000:5000 --name concurso-publico \
+            sudo docker pull ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:latest
+            sudo docker run -d -p 5000:5000 --name concurso-publico \
               -e DB_HOST="${aws_db_instance.rds_postgres.endpoint}" \
               -e DB_USER="${var.db_username}" \
               -e DB_PASS="${var.db_password}" \
@@ -100,7 +101,7 @@ resource "null_resource" "init_db" {
       done
       
       echo "🚀 Criando tabelas no banco..."
-      PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -f init.sql
+      PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -f init.sql || (echo "❌ ERRO: Falha ao criar as tabelas" && exit 1)
       echo "✅ Tabelas criadas com sucesso!"
     EOT
   }
