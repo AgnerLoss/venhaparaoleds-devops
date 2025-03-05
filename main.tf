@@ -82,7 +82,8 @@ resource "null_resource" "init_db" {
 
   provisioner "local-exec" {
     command = <<EOT
-      PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.endpoint}" -U "${var.db_username}" -d "${var.db_name}" -f init.sql
+      sleep 30  # Aguarda o banco ficar pronto
+      PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.address}" -U "${var.db_username}" -d "${var.db_name}" -f init.sql
     EOT
   }
 }
