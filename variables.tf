@@ -13,6 +13,7 @@ variable "ghcr_token" {
 variable "db_username" {
   description = "Usuário do banco de dados"
   type        = string
+  default     = "admin2"
 }
 
 variable "db_password" {
@@ -24,11 +25,13 @@ variable "db_password" {
 variable "db_name" {
   description = "Nome do banco de dados"
   type        = string
+  default     = "concurso"
 }
 
 variable "db_port" {
   description = "Porta do banco de dados"
   type        = string
+  default     = "5432"
 }
 
 variable "db_host" {
