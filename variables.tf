@@ -34,6 +34,6 @@ variable "db_port" {
 }
 
 variable "db_host" {
-  description = "Porta do banco de dados"
+  description = "Endpoint do banco de dados RDS"
   type        = string  
 }
