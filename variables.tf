@@ -7,12 +7,12 @@ variable "aws_region" {
 variable "ghcr_token" {
   description = "Token para login no GitHub Container Registry"
   type        = string
+  sensitive   = true
 }
 
 variable "db_username" {
   description = "Usuário do banco de dados"
   type        = string
-  sensitive   = true
 }
 
 variable "db_password" {
@@ -24,13 +24,11 @@ variable "db_password" {
 variable "db_name" {
   description = "Nome do banco de dados"
   type        = string
-  sensitive   = true
 }
 
 variable "db_port" {
   description = "Porta do banco de dados"
   type        = string
-  sensitive   = true
 }
 
 variable "db_host" {
