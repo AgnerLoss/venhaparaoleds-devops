@@ -36,4 +36,5 @@ variable "db_port" {
 variable "db_host" {
   description = "Endpoint do banco de dados RDS"
   type        = string  
+  default     = "concurso.c922aggume6k.us-west-1.rds.amazonaws.com"
 }
