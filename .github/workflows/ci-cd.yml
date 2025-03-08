@@ -31,7 +31,7 @@ jobs:
 
       # ✅ Configurar o ambiente e definir PYTHONPATH corretamente
       - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+        run: echo "PYTHONPATH=$PYTHONPATH:$PWD/src" >> $GITHUB_ENV
 
       # Passo 4: Instalar SonarScanner
       - name: Download and Install SonarScanner
