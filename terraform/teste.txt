@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.3.4, pluggy-1.5.0
+rootdir: /home/agner/Documentos/projetos/leds/venhaparaoleds-devops/terraform
+plugins: cov-6.0.0
+collected 0 items
+
+WARNING: Failed to generate report: No data to report.
+
+
+
+---------- coverage: platform linux, python 3.12.3-final-0 -----------
+
+============================ no tests ran in 0.03s =============================

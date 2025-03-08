@@ -1,161 +1,104 @@
----
+# 📌 Projeto: API de Gerenciamento de Concursos Públicos
 
-# Projeto: Sistema de Gerenciamento de Concurso Público
+## 📖 Sobre o Projeto
+Este projeto é uma API REST desenvolvida em **Flask**, que permite gerenciar concursos públicos e candidatos. A aplicação utiliza um banco de dados **PostgreSQL** hospedado na **AWS RDS**, é containerizada via **Docker** e gerenciada através de **Terraform** para infraestrutura como código.
 
----
+## 🏗 Arquitetura e Tecnologias Utilizadas
+### **Tecnologias**
+- **Linguagem:** Python 3.12 + Flask
+- **Banco de Dados:** PostgreSQL (AWS RDS)
+- **Infraestrutura:** AWS (EC2 + RDS) gerenciado com Terraform
+- **Containerização:** Docker
+- **CI/CD:** GitHub Actions + SonarQube + Trivy
+- **Testes:** pytest + unittest
 
-Este projeto foi desenvolvido com o auxílio de ferramentas de Inteligência Artificial (IA) para aprimorar a qualidade do código, documentação e boas práticas. 
+### **Fluxo da Aplicação**
+1. O usuário realiza requisições HTTP para a API.
+2. A API consulta ou armazena dados no banco PostgreSQL.
+3. O banco de dados retorna os resultados para a API.
+4. A API responde ao usuário com os dados formatados em JSON.
 
-- **[DeepSeek](https://www.deepseek.com/)**: Para insights e otimizações no desenvolvimento.
-- **[ChatGPT](https://openai.com/chatgpt)**: Para revisão de código, sugestões e documentação.
-- **[Grok](https://grok.ai/)**: Para análises e recomendações técnicas.
+## 🚀 Como Configurar e Rodar a Aplicação
+### **1️⃣ Pré-requisitos**
+Antes de começar, garanta que você tenha instalado:
+- **Docker e Docker Compose**
+- **Terraform**
+- **AWS CLI configurado**
 
----
-
-# 📋 Concurso Público API 🚀
-
-## **Descrição do Projeto**
-Este projeto é uma API REST desenvolvida em **Flask** para gerenciar concursos públicos e candidatos.  
-A aplicação está implantada na **AWS** usando:
-- **EC2** para rodar o backend com **Docker**
-- **RDS PostgreSQL** para armazenar os dados
-- **Terraform** para provisionar a infraestrutura
-- **Nginx** como proxy reverso para direcionar requisições ao Flask
-
----
-
-## **📋 Tecnologias Utilizadas**
-- 🦄 **Python 3.12** + **Flask**
-- 💢 **Docker**
-- ☁️ **AWS EC2 + RDS PostgreSQL**
-- 🌿 **Terraform**
-- 🌍 **Nginx (Proxy Reverso)**
-- 🔍 **PostgreSQL**
-- 🛠️ **GitHub Actions (CI/CD)**
-
----
-
-## **📁 Como Rodar o Projeto**
-### **1️⃣ Clonar o repositório**
-```sh
-git clone https://github.com/SEU-USUARIO/SEU-REPO.git
-cd SEU-REPO
-```
-
-### **2️⃣ Subir a Infraestrutura na AWS com Terraform**
-Certifique-se de configurar suas **chaves da AWS** antes de rodar:
-```sh
-export AWS_ACCESS_KEY_ID="SEU_ACCESS_KEY"
-export AWS_SECRET_ACCESS_KEY="SEU_SECRET_KEY"
+### **2️⃣ Configurar a Infraestrutura na AWS**
+```bash
+cd terraform/
 terraform init
 terraform apply -auto-approve
 ```
-Isso criará:
-✅ Uma instância **EC2** com **Docker e Nginx**  
-✅ Um banco de dados **RDS PostgreSQL**  
-✅ Um **Elastic IP fixo** para a EC2  
+Isso criará a infraestrutura necessária, incluindo a instância EC2 e o banco de dados RDS.
 
-### **3️⃣ Testar a API**
-Pegue o **IP da EC2** e acesse:
-```sh
-curl -X GET "http://SEU_IP_FIXO/buscar_candidatos/61828450843"
+### **3️⃣ Rodar a Aplicação Localmente**
+Se quiser rodar a API localmente, primeiro configure suas variáveis de ambiente:
+```bash
+export DB_HOST="seu-rds-endpoint"
+export DB_USER="seu-usuario"
+export DB_PASS="sua-senha"
+export DB_NAME="concurso"
+export DB_PORT="5432"
 ```
-Se o Nginx estiver configurado corretamente, a API estará acessível em:
+Agora inicie a API:
+```bash
+python src/app.py
 ```
-http://k8sloss.com.br
+A API estará disponível em **http://127.0.0.1:5000**.
+
+### **4️⃣ Rodar a Aplicação com Docker**
+Se preferir usar Docker:
+```bash
+docker build -t concurso-publico .
+docker run -d -p 5000:5000 --name concurso-publico \
+    -e DB_HOST="$DB_HOST" \
+    -e DB_USER="$DB_USER" \
+    -e DB_PASS="$DB_PASS" \
+    -e DB_NAME="$DB_NAME" \
+    -e DB_PORT="$DB_PORT" \
+    concurso-publico
 ```
+Acesse **http://localhost:5000** para interagir com a API.
+
+## 🛠 Endpoints da API
+### **📌 Concursos**
+- `GET /concursos` → Lista todos os concursos.
+- `POST /concursos` → Cadastra um novo concurso.
+- `GET /buscar_concursos/<cpf>` → Retorna concursos compatíveis com um CPF.
+
+### **📌 Candidatos**
+- `GET /candidatos` → Lista todos os candidatos.
+- `POST /candidatos` → Cadastra um novo candidato.
+- `GET /buscar_candidatos/<codigo>` → Retorna candidatos compatíveis com um concurso.
+
+## ✅ Como Rodar os Testes
+A aplicação possui testes unitários e de integração utilizando **pytest**.
+```bash
+pytest --cov=src --cov-report=term-missing
+```
+Isso irá rodar os testes e exibir a cobertura de código.
+
+## 🔄 CI/CD e Deploy
+O projeto conta com um **pipeline automatizado** via GitHub Actions:
+1. **Testes e Análise de Código:**
+   - Linting e testes unitários com cobertura.
+   - SonarQube para análise de qualidade do código.
+   - Trivy para escanear vulnerabilidades em imagens Docker.
+2. **Build e Deploy:**
+   - Construção da imagem Docker.
+   - Publicação no **GitHub Container Registry (GHCR)**.
+   - Provisionamento automático da infraestrutura na AWS via Terraform.
+
+## 📌 Melhorias Futuras
+- Adicionar autenticação JWT na API.
+- Implementar cache Redis para otimizar buscas.
+- Criar interface web para gerenciamento dos concursos.
+
+## 🏆 Conclusão
+Esse projeto foi estruturado para ser escalável e modular, seguindo **boas práticas de Clean Code, infraestrutura como código e CI/CD**. 🚀
 
 ---
-
-## **🔍 Endpoints da API**
-### **📍 Listar Concursos por CPF**
-- **Método:** `GET`
-- **Endpoint:** `/buscar_concursos/<cpf>`
-- **Exemplo:**
-```sh
-curl -X GET "http://SEU_IP_FIXO/buscar_concursos/18284508434"
-```
-
-### **📍 Listar Candidatos por Código do Concurso**
-- **Método:** `GET`
-- **Endpoint:** `/buscar_candidatos/<codigo>`
-- **Exemplo:**
-```sh
-curl -X GET "http://SEU_IP_FIXO/buscar_candidatos/61828450843"
-```
-
----
-
-## **🌐 Configuração do Proxy Reverso com Nginx**
-
-### **Arquivo de configuração do Nginx (`/etc/nginx/nginx.conf`)**
-```nginx
-server {
-    listen 80;
-    server_name k8sloss.com.br www.k8sloss.com.br;
-
-    location / {
-        proxy_pass http://127.0.0.1:5000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-}
-```
-
-### **Reiniciar o Nginx para aplicar mudanças**
-```sh
-sudo systemctl restart nginx
-```
-
----
-
-## **🏢 Infraestrutura AWS com Terraform**
-
-### **📍 Recursos Criados**
-✅ **EC2** (Instância com Docker e Nginx)  
-✅ **RDS PostgreSQL** (Banco gerenciado)  
-✅ **Security Groups** (Permissões para tráfego HTTP e PostgreSQL)  
-✅ **Elastic IP** (IP fixo para a EC2)
-
----
-
-## **🚀 Como Fazer Deploy Automático (CI/CD)**
-
-O projeto pode ser configurado com **GitHub Actions** para deploy contínuo.
-
-### **Exemplo de workflow (`.github/workflows/deploy.yml`)**
-```yaml
-name: Deploy Infra to AWS
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-      - name: Set up Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: "1.5.0"
-
-      - name: Terraform Init
-        run: terraform init
-
-      - name: Terraform Apply
-        run: terraform apply -auto-approve
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-```
-
-Agora, **sempre que fizer um push para `main`**, o Terraform será executado automaticamente! 🚀🔥
-
----
+📩 **Contato:** Caso tenha dúvidas ou sugestões, me avise! 😃
 
