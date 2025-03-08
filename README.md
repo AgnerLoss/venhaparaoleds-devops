@@ -33,6 +33,20 @@ terraform apply -auto-approve
 ```
 Isso criará a infraestrutura necessária, incluindo a instância EC2 e o banco de dados RDS.
 
+### 🔒 Regras de Segurança na AWS (Security Group)
+Para garantir que a aplicação Flask consiga acessar o banco de dados PostgreSQL no RDS, foi necessário criar **manualmente** um Security Group na AWS liberando a porta padrão do PostgreSQL (`5432`):
+
+- Crie um novo **Security Group** na AWS com uma regra **inbound** permitindo acesso via porta `5432` exclusivamente para a instância EC2 que executa a aplicação Flask.
+- Vincule este **Security Group** tanto à instância EC2 quanto à instância RDS PostgreSQL.
+
+Exemplo:
+
+| Tipo | Protocolo | Porta | Origem        | Descrição                   |
+|------|-----------|-------|---------------|-----------------------------|
+| TCP  | TCP       | 5432  | IP da EC2     | Acesso ao banco PostgreSQL  |
+
+Isso é essencial para garantir a comunicação entre sua aplicação e o banco de dados durante a avaliação.
+
 ### **3️⃣ Rodar a Aplicação Localmente**
 Se quiser rodar a API localmente, primeiro configure suas variáveis de ambiente:
 ```bash
@@ -73,6 +87,10 @@ Acesse **http://localhost:5000** para interagir com a API.
 - `POST /candidatos` → Cadastra um novo candidato.
 - `GET /buscar_candidatos/<codigo>` → Retorna candidatos compatíveis com um concurso.
 
+### **📌 Cadastro Geral (Web)**
+- A rota `/cadastro` permite o cadastro fácil e intuitivo tanto de concursos quanto de candidatos através de uma interface web amigável.
+- Acesse diretamente: **http://localhost:5000/cadastro** após iniciar a aplicação.
+
 ## ✅ Como Rodar os Testes
 A aplicação possui testes unitários e de integração utilizando **pytest**.
 ```bash
@@ -81,7 +99,16 @@ pytest --cov=src --cov-report=term-missing
 Isso irá rodar os testes e exibir a cobertura de código.
 
 ## 🔄 CI/CD e Deploy
-O projeto conta com um **pipeline automatizado** via GitHub Actions:
+O projeto conta com um **pipeline automatizado** via GitHub Actions. Certifique-se de configurar as seguintes variáveis de ambiente nos GitHub Actions Secrets:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `GHCR_TOKEN`
+- `DB_USERNAME`
+- `DB_PASSWORD`
+- `DB_NAME`
+
+### Pipeline:
 1. **Testes e Análise de Código:**
    - Linting e testes unitários com cobertura.
    - SonarQube para análise de qualidade do código.
@@ -101,4 +128,3 @@ Esse projeto foi estruturado para ser escalável e modular, seguindo **boas prá
 
 ---
 📩 **Contato:** Caso tenha dúvidas ou sugestões, me avise! 😃
-

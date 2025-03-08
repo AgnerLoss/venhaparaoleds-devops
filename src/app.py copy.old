@@ -2,7 +2,6 @@ from flask import Flask, jsonify, render_template, request
 import psycopg2
 import psycopg2.pool
 import os
-import time
 
 app = Flask(__name__)
 
@@ -13,43 +12,18 @@ DB_PASS = os.getenv("DB_PASS")
 DB_NAME = os.getenv("DB_NAME")
 DB_PORT = os.getenv("DB_PORT", "5432")
 
-# Aguarda disponibilidade do banco antes de criar o pool
-def wait_for_db():
-    retries = 10
-    while retries:
-        try:
-            conn = psycopg2.connect(
-                host=DB_HOST,
-                user=DB_USER,
-                password=DB_PASS,
-                dbname=DB_NAME,
-                port=DB_PORT
-            )
-            conn.close()
-            app.logger.info("✅ Banco disponível!")
-            return True
-        except psycopg2.OperationalError:
-            app.logger.info("🔄 Banco não disponível, esperando 5 segundos...")
-            retries -= 1
-            time.sleep(5)
-    return False
-
 # Criar pool de conexões para evitar sobrecarga no banco
-if wait_for_db():
-    try:
-        db_pool = psycopg2.pool.SimpleConnectionPool(1, 10,
-            host=DB_HOST,
-            user=DB_USER,
-            password=DB_PASS,
-            dbname=DB_NAME,
-            port=DB_PORT
-        )
-        app.logger.info("✅ Conexão com o banco estabelecida com sucesso!")
-    except Exception as e:
-        app.logger.error(f"❌ Erro ao conectar ao banco: {e}")
-        db_pool = None
-else:
-    app.logger.error("❌ O banco não ficou disponível após várias tentativas.")
+try:
+    db_pool = psycopg2.pool.SimpleConnectionPool(1, 10,
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASS,
+        dbname=DB_NAME,
+        port=DB_PORT
+    )
+    app.logger.info("✅ Conexão com o banco estabelecida com sucesso!")
+except Exception as e:
+    app.logger.error(f"❌ Erro ao conectar ao banco: {e}")
     db_pool = None
 
 def get_db_connection():
@@ -64,6 +38,7 @@ def release_db_connection(conn):
     """ Libera uma conexão de volta para o pool """
     if conn and db_pool:
         db_pool.putconn(conn)
+
 
 def create_tables():
     """ Cria as tabelas no banco de dados se não existirem """
@@ -221,6 +196,9 @@ def buscar_candidatos_por_codigo(codigo):
         return jsonify({"error": f"Erro ao buscar candidatos: {e}"}), 500
     finally:
         release_db_connection(conn)
+
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
