@@ -112,6 +112,9 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Navigate to Terraform directory
+        run: cd terraform  
+
       # Passo 4: Aplicar as mudanças (provisionar infraestrutura)
       - name: Terraform Apply
         run: terraform apply -auto-approve -var="ghcr_token=${{ secrets.GHCR_TOKEN }}" -var="db_password=${{ secrets.TF_VAR_DB_PASSWORD }}"
