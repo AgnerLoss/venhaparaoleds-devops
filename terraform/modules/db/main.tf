@@ -15,3 +15,42 @@ resource "aws_db_instance" "rds_postgres" {
 output "rds_endpoint" {
   value = aws_db_instance.rds_postgres.endpoint
 }
+
+resource "null_resource" "init_db" {
+  depends_on = [aws_db_instance.rds_postgres]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "⏳ Aguardando o banco de dados estar pronto..."
+      
+      # Loop para verificar se o RDS já está acessível
+      for i in $(seq 1 20); do
+        PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.address}" -U "${var.db_username}" -d "${var.db_name}" -c "SELECT 1;" && break
+        echo "🔄 Banco ainda não disponível... aguardando 15 segundos"
+        sleep 15
+      done
+
+      echo "🚀 Criando tabelas no banco..."
+      PGPASSWORD="${var.db_password}" psql -h "${aws_db_instance.rds_postgres.address}" -U "${var.db_username}" -d "${var.db_name}" <<EOSQL
+      CREATE TABLE IF NOT EXISTS concursos (
+          id SERIAL PRIMARY KEY,
+          orgao TEXT NOT NULL,
+          edital TEXT NOT NULL,
+          codigo TEXT NOT NULL,
+          vagas TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS candidatos (
+          id SERIAL PRIMARY KEY,
+          nome TEXT NOT NULL,
+          data_nascimento TEXT NOT NULL,
+          cpf TEXT NOT NULL UNIQUE,
+          profissoes TEXT NOT NULL
+      );
+      EOSQL
+
+      echo "✅ Tabelas criadas com sucesso!"
+    EOT
+  }
+}
+
