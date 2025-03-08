@@ -13,13 +13,18 @@ def client():
 
 @pytest.fixture
 def mock_db():
-    """Mock do banco de dados para evitar conexões reais."""
     with patch("src.app.get_db_connection") as mock_conn:
         mock_conn.return_value = MagicMock()
         mock_cursor = mock_conn.return_value.cursor.return_value
-        mock_cursor.fetchall.return_value = [("João Silva", "1990-01-01", "12345678900", "professor")]
-        mock_cursor.fetchone.return_value = None  # Evita erro de conexão
+        
+        # Certifique-se de que os dados retornados batem com os testes
+        mock_cursor.fetchall.side_effect = [
+            [("SEDU", "61828450843", "9/2016")],  # `buscar_concursos_por_cpf`
+            [("João Silva", "1990-01-01", "12345678900", "professor")]  # `/candidatos`
+        ]
         yield mock_conn
+
+
 
 
 

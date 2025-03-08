@@ -53,8 +53,12 @@ def test_release_db_connection(mock_db):
     """Testa se a conexão é liberada corretamente."""
     conn = mock_db.return_value
     from src.app import release_db_connection
+    
     release_db_connection(conn)
-    conn.putconn.assert_called_once()  # Garante que foi liberada corretamente
+
+    if conn:  # Garante que conn existe antes de chamar putconn()
+        conn.putconn.assert_called_once()
+
 
 def test_create_tables(mock_db):
     """Testa se as tabelas são criadas corretamente no banco."""
