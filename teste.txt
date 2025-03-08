@@ -11,7 +11,7 @@ tests/test_concurso.py ....                                              [100%]
 =================================== FAILURES ===================================
 __________________________ test_release_db_connection __________________________
 
-mock_db = <MagicMock name='get_db_connection' id='124877462920976'>
+mock_db = <MagicMock name='get_db_connection' id='126677236686896'>
 
     def test_release_db_connection(mock_db):
         """Testa se a conexão é liberada corretamente."""
@@ -23,7 +23,7 @@ mock_db = <MagicMock name='get_db_connection' id='124877462920976'>
 tests/test_app.py:57: 
 _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
 
-self = <MagicMock name='get_db_connection().putconn' id='124877462993280'>
+self = <MagicMock name='get_db_connection().putconn' id='126677236746528'>
 
     def assert_called_once(self):
         """assert that the mock was called only once.
@@ -40,7 +40,7 @@ E           AssertionError: Expected 'putconn' to have been called once. Called 
 ______________________________ test_candidato_api ______________________________
 
 client = <FlaskClient <Flask 'src.app'>>
-mock_db = <MagicMock name='get_db_connection' id='124877467982144'>
+mock_db = <MagicMock name='get_db_connection' id='126677241044032'>
 
     def test_candidato_api(client, mock_db):
         """Testa se a API de candidatos retorna código HTTP 200."""
@@ -53,7 +53,7 @@ tests/test_candidato.py:45: AssertionError
 ________________________ test_buscar_concursos_por_cpf _________________________
 
 client = <FlaskClient <Flask 'src.app'>>
-mock_db = <MagicMock name='get_db_connection' id='124877467813888'>
+mock_db = <MagicMock name='get_db_connection' id='126677240876016'>
 
     def test_buscar_concursos_por_cpf(client, mock_db):
         """Testa se a busca por concursos retorna corretamente."""
@@ -80,4 +80,4 @@ TOTAL                158     29    82%
 FAILED tests/test_app.py::test_release_db_connection - AssertionError: Expect...
 FAILED tests/test_candidato.py::test_candidato_api - assert 500 == 200
 FAILED tests/test_candidato.py::test_buscar_concursos_por_cpf - AssertionErro...
-========================= 3 failed, 15 passed in 0.51s =========================
+========================= 3 failed, 15 passed in 0.46s =========================
