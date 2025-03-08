@@ -7,52 +7,60 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch:  # Permite acionar manualmente o workflow
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
-      # ✅ Checkout do código
+      # Passo 1: Verifica o código
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # ✅ Configurar Python
+      # Passo 2: Configura o Python
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      # ✅ Instalar dependências corretamente (Flask, pytest, etc.)
+      # Passo 3: Instala dependências
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install pytest pytest-cov flask
 
-      # ✅ Configurar PYTHONPATH
+      # ✅ Configurar o ambiente e definir PYTHONPATH corretamente
       - name: Set PYTHONPATH
-        run: echo "PYTHONPATH=$PWD/src" >> $GITHUB_ENV
+        run: echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+
+      # Passo 4: Instalar SonarScanner
+      - name: Download and Install SonarScanner
+        run: |
+          curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-7.0.2.4839-linux-x64.zip
+          unzip sonar-scanner.zip -d $HOME
+          export PATH=$HOME/sonar-scanner-7.0.2.4839-linux-x64/bin:$PATH
 
       # ✅ Rodar testes com cobertura mínima de 80%
       - name: Run tests
         run: pytest tests/ --cov=src --cov-fail-under=80 --cov-report=xml:coverage.xml
 
-      # ✅ Executar Análise do SonarQube
+      # Passo 6: Executar Análise do SonarQube
       - name: SonarQube Scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
+          export PATH=$HOME/sonar-scanner-7.0.2.4839-linux-x64/bin:$PATH
           sonar-scanner \
             -Dsonar.organization=agner \
             -Dsonar.projectKey=agner_venhaparaoleds-devops \
             -Dsonar.sources=. \
             -Dsonar.host.url=https://sonarcloud.io
 
-      # ✅ Construir a imagem Docker
+      # Passo 7: Construir a imagem Docker
       - name: Build Docker image
         run: docker build -t concurso-publico .
 
-      # ✅ Instalar Trivy (scanner de segurança)
+      # Passo 8: Instalar o Trivy
       - name: Install Trivy
         run: |
           sudo apt-get update
@@ -62,16 +70,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y trivy
 
-      # ✅ Escanear a imagem Docker com Trivy
+      # Passo 9: Escanear a imagem Docker com Trivy
       - name: Scan Docker image with Trivy
-        run: trivy image --severity HIGH,CRITICAL concurso-publico
+        run: |
+          trivy image --severity HIGH,CRITICAL concurso-publico
 
-      # ✅ Login no GitHub Packages (se for um push na `main`)
+      # Passo 10: Login no GitHub Packages (apenas para push)
       - name: Login to GitHub Packages
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-      # ✅ Publicar imagem no GitHub Container Registry (apenas para push)
+      # Passo 11: Push para o GitHub Container Registry (apenas para push)
       - name: Push Docker image
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
@@ -80,32 +89,32 @@ jobs:
           docker push ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:latest
           docker push ghcr.io/agnerloss/venhaparaoleds-devops/concurso-publico:${{ github.sha }}
 
-      # ✅ Limpeza do workspace
+      # Passo 12: Limpar workspace
       - name: Clean up workspace
         if: always()
         run: rm -rf $HOME/sonar-scanner-7.0.2.4839-linux-x64 sonar-scanner.zip
 
   provision-infrastructure:
     runs-on: ubuntu-latest
-    needs: build-and-test
+    needs: build-and-test  # Depende do job de build e teste
     steps:
-      # ✅ Checkout do código
+      # Passo 1: Checkout do código
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # ✅ Configurar Terraform
+      # Passo 2: Configurar o Terraform
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: "1.5.0"
 
-      # ✅ Inicializar Terraform
+      # Passo 3: Inicializar o Terraform
       - name: Terraform Init
         run: terraform init
 
-      # ✅ Aplicar mudanças no Terraform (infraestrutura)
+      # Passo 4: Aplicar as mudanças (provisionar infraestrutura)
       - name: Terraform Apply
-        run: terraform apply -auto-approve -var="ghcr_token=${{ secrets.GHCR_TOKEN }}" 
+        run: terraform apply -auto-approve -var="ghcr_token=${{ secrets.GHCR_TOKEN }}" -var="db_password=${{ secrets.TF_VAR_DB_PASSWORD }}"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
