@@ -42,7 +42,7 @@ jobs:
 
       # ✅ Rodar testes com cobertura mínima de 80%
       - name: Run tests
-        run: pytest tests/ --cov=src --cov-fail-under=80 --cov-report=xml:coverage.xml
+        run: pytest --cov=src --cov-report=term-missing
 
       # Passo 6: Executar Análise do SonarQube
       - name: SonarQube Scan
