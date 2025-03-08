@@ -1,5 +1,5 @@
 import pytest
-from concurso import Concurso
+from src.concurso import Concurso
 
 def test_concurso_corresponde_ao_candidato():
     concurso = Concurso("SEJUS", "15/2017", "61828450843", ["carpinteiro", "professor de matemática", "assistente administrativo"])

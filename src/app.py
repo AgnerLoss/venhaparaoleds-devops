@@ -6,7 +6,7 @@ import os
 app = Flask(__name__)
 
 # Configuração do banco de dados PostgreSQL no RDS
-DB_HOST = os.getenv("DB_HOST", "concurso-rds.c922aggume6k.us-west-1.rds.amazonaws.com")
+DB_HOST = os.getenv("DB_HOST")
 DB_USER = os.getenv("DB_USER")
 DB_PASS = os.getenv("DB_PASS")
 DB_NAME = os.getenv("DB_NAME")
@@ -36,8 +36,9 @@ def get_db_connection():
 
 def release_db_connection(conn):
     """ Libera uma conexão de volta para o pool """
-    if conn:
+    if conn and db_pool:
         db_pool.putconn(conn)
+
 
 def create_tables():
     """ Cria as tabelas no banco de dados se não existirem """
