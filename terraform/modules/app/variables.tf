@@ -5,4 +5,4 @@ variable "db_name" {}
 variable "db_port" {}
 variable "security_group" {}
 variable "ghcr_token" {}
-variable "elastic_ip_id" {}
+
