@@ -19,7 +19,7 @@ variable "db_username" {
 variable "db_password" {
   description = "Senha do banco de dados"
   type        = string
-  sensitive   = true
+  default     = "SenhaSegura123!"
 }
 
 variable "db_name" {
